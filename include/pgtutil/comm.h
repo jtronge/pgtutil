@@ -3,15 +3,33 @@
 
 namespace pgtutil::comm {
 
+template<typename T>
+MPI_Datatype get_mpi_type();
+
+template<>
+MPI_Datatype get_mpi_type<uint64_t>()
+{
+    return MPI_UINT64_T;
+}
+
+template<>
+MPI_Datatype get_mpi_type<double>()
+{
+    return MPI_DOUBLE;
+}
+
 // MPI window RMA communication abstraction
+
+// MPI window RMA communication abstraction
+template<typename T>
 struct Window {
     MPI_Win win;
-    uint64_t* ptr;
+    T* ptr;
 
-    Window(MPI_Comm comm, std::span<const uint64_t> data)
+    Window(MPI_Comm comm, std::span<const T> data)
     {
         // Allocate the window
-        MPI_Win_allocate(data.size() * sizeof(uint64_t), sizeof(uint64_t),
+        MPI_Win_allocate(data.size() * sizeof(T), sizeof(T),
                          MPI_INFO_NULL, comm, &ptr, &win);
         // Copy over the data
         MPI_Win_fence(0, win);
@@ -33,17 +51,17 @@ struct Window {
     }
 
     // Put data to a remote window
-    void put(std::span<const uint64_t> buf, int dest, uint64_t off)
+    void put(std::span<const T> buf, int dest, uint64_t off)
     {
-        MPI_Put(buf.data(), buf.size(), MPI_UINT64_T,
-                dest, off, buf.size(), MPI_UINT64_T, win);
+        MPI_Put(buf.data(), buf.size(), get_mpi_type<T>(),
+                dest, off, buf.size(), get_mpi_type<T>(), win);
     }
 
     // Get data from a remote window
-    void get(std::span<uint64_t> buf, int src, uint64_t off)
+    void get(std::span<T> buf, int src, uint64_t off)
     {
-        MPI_Get(buf.data(), buf.size(), MPI_UINT64_T,
-                src, off, buf.size(), MPI_UINT64_T, win);
+        MPI_Get(buf.data(), buf.size(), get_mpi_type<T>(),
+                src, off, buf.size(), get_mpi_type<T>(), win);
     }
 };
 
