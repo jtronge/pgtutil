@@ -1,5 +1,7 @@
-#ifndef _PGTUTIL_H
-#define _PGTUTIL_H
+#ifndef PGTUTIL_H
+#define PGTUTIL_H
+
+#include "comm.h"
 
 namespace pgtutil {}
 
